@@ -14,7 +14,6 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
@@ -22,8 +21,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 import javafx.util.StringConverter;
 
 /**
@@ -38,12 +35,11 @@ import javafx.util.StringConverter;
  *
  * @author armin
  */
-public class DateTimePicker extends Pane {
+public class DateTimePicker extends DatePicker {
 
   private final ObjectProperty<LocalDateTime> dateTimeProperty = new SimpleObjectProperty<>();
   private final BooleanProperty allowNull = new SimpleBooleanProperty(true);
   private final BooleanProperty allowTime = new SimpleBooleanProperty(true);
-  private final DatePicker datePicker;
   private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
   private final TextField textHours = new TextField();
   private final TextField textMinutes = new TextField();
@@ -53,7 +49,7 @@ public class DateTimePicker extends Pane {
       textHours.setEditable(newValue);
       textMinutes.setEditable(newValue);
 
-      if(!newValue) {
+      if (!newValue) {
         textHours.setText("00");
         textMinutes.setText("00");
       }
@@ -73,24 +69,7 @@ public class DateTimePicker extends Pane {
 
     textMinutes.setPrefColumnCount(2);
 
-    datePicker = new DatePicker() {
-      @Override
-      protected Skin<?> createDefaultSkin() {
-        DatePickerSkin datePickerSkin = new DatePickerSkin(this);
-        DatePickerContent datePickerContent = (DatePickerContent) datePickerSkin.getPopupContent();
-
-        HBox hBox = new HBox();
-        hBox.setAlignment(Pos.CENTER_LEFT);
-        hBox.setSpacing(7.);
-
-        hBox.getChildren().addAll(textHours, new Label(":"), textMinutes);
-        datePickerContent.getChildren().add(0, hBox);
-
-        return datePickerSkin;
-      }
-    };
-
-    datePicker.setConverter(new StringConverter<LocalDate>() {
+    setConverter(new StringConverter<LocalDate>() {
       @Override
       public String toString(LocalDate object) {
         LocalDateTime value = getDateTime();
@@ -114,15 +93,15 @@ public class DateTimePicker extends Pane {
 
         LocalDateTime localDateTime;
         try {
-           localDateTime = LocalDateTime.parse(value, formatter);
+          localDateTime = LocalDateTime.parse(value, formatter);
         } catch (DateTimeParseException e) {
           localDateTime = dateTimeProperty.get();
-          if(localDateTime == null) {
+          if (localDateTime == null) {
             return null;
           }
         }
 
-        if(allowTime.get()) {
+        if (allowTime.get()) {
           textHours.setText(String.valueOf(localDateTime.getHour()));
           textMinutes.setText(String.valueOf(localDateTime.getMinute()));
         }
@@ -132,18 +111,18 @@ public class DateTimePicker extends Pane {
       }
     });
 
-    datePicker.setOnShowing(event -> {
-      if(dateTimeProperty.get() == null) {
-        if(allowTime.get()) {
+    setOnShowing(event -> {
+      if (dateTimeProperty.get() == null) {
+        if (allowTime.get()) {
           LocalTime now = LocalTime.now();
           textHours.setText(String.valueOf(now.getHour()));
           textMinutes.setText(String.valueOf(now.getMinute()));
         }
       }
-      datePicker.getEditor().fireEvent(new KeyEvent(datePicker.getEditor(), datePicker.getEditor(), KeyEvent.KEY_PRESSED, null, null, KeyCode.ENTER, false, false, false, false));
+      getEditor().fireEvent(new KeyEvent(getEditor(), getEditor(), KeyEvent.KEY_PRESSED, null, null, KeyCode.ENTER, false, false, false, false));
     });
 
-    datePicker.valueProperty().addListener((observable, oldValue, newValue) -> {
+    valueProperty().addListener((observable, oldValue, newValue) -> {
       if (newValue == null) {
         if (allowNull.get()) {
           dateTimeProperty.set(null);
@@ -187,17 +166,31 @@ public class DateTimePicker extends Pane {
         dateTimeProperty.setValue(oldValue);
       }
 
-      datePicker.setValue(newValue == null ? null : newValue.toLocalDate());
+      setValue(newValue == null ? null : newValue.toLocalDate());
     });
 
     // Persist changes onblur
-    datePicker.getEditor().focusedProperty().addListener((observable, oldValue, newValue) -> {
+    getEditor().focusedProperty().addListener((observable, oldValue, newValue) -> {
       if (!newValue) {
-        datePicker.getEditor().fireEvent(new KeyEvent(datePicker.getEditor(), datePicker.getEditor(), KeyEvent.KEY_PRESSED, null, null, KeyCode.ENTER, false, false, false, false));
+        getEditor().fireEvent(new KeyEvent(getEditor(), getEditor(), KeyEvent.KEY_PRESSED, null, null, KeyCode.ENTER, false, false, false, false));
       }
     });
 
-    getChildren().setAll(loadView());
+  }
+
+  @Override
+  protected Skin<?> createDefaultSkin() {
+    DatePickerSkin datePickerSkin = new DatePickerSkin(this);
+    DatePickerContent datePickerContent = (DatePickerContent) datePickerSkin.getPopupContent();
+
+    HBox hBox = new HBox();
+    hBox.setAlignment(Pos.CENTER_LEFT);
+    hBox.setSpacing(7.);
+
+    hBox.getChildren().addAll(textHours, new Label(":"), textMinutes);
+    datePickerContent.getChildren().add(0, hBox);
+
+    return datePickerSkin;
   }
 
   public LocalDateTime getDateTime() {
@@ -234,11 +227,5 @@ public class DateTimePicker extends Pane {
 
   public void setAllowTime(final boolean allowTime) {
     this.allowTime.set(allowTime);
-  }
-
-  private Node loadView() {
-    StackPane stackPane = new StackPane();
-    stackPane.getChildren().add(datePicker);
-    return stackPane;
   }
 }
