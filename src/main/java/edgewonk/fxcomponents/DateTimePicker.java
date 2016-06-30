@@ -13,8 +13,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
@@ -103,14 +101,16 @@ public class DateTimePicker extends DatePicker {
 
       String textValue = textField.getText();
 
-      if (textValue.length() == 2) {
+      if (textValue.length() == 0) {
+        textField.setText("00");
+      } else if (textValue.length() == 1) {
+        textField.setText("0" + textValue);
+      } else if (textValue.length() == 2) {
         if (Integer.parseInt(textValue) > maxValue) {
           textField.setText("0" + textValue.substring(1));
-          return;
         }
-      }
-
-      if (textValue.length() > 2) {
+      } else {
+        //textValue.length() > 2
         int start = textValue.length() - 2;
         int end = textValue.length();
         textValue = textValue.substring(start, end);
