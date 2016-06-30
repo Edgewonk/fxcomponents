@@ -13,6 +13,8 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
@@ -55,20 +57,72 @@ public class DateTimePicker extends DatePicker {
       }
     });
 
-    textHours.setPrefColumnCount(2);
-    textHours.textProperty().addListener((ov, oldValue, newValue) -> {
-      if (!newValue.chars().allMatch(Character::isDigit)) {
-        textHours.setText(oldValue);
-        return;
+    limitTimeField(textHours, 23);
+    limitTimeField(textMinutes, 59);
+    setConverter();
+
+    setOnShowing(event -> {
+      if (dateTimeProperty.get() == null) {
+        if (allowTime.get()) {
+          LocalTime now = LocalTime.now();
+          textHours.setText(String.valueOf(now.getHour()));
+          textMinutes.setText(String.valueOf(now.getMinute()));
+        }
       }
-      if (textHours.getText().length() > 2) {
-        String s = textHours.getText().substring(0, 2);
-        textHours.setText(s);
+      getEditor().fireEvent(new KeyEvent(getEditor(), getEditor(), KeyEvent.KEY_PRESSED, null, null, KeyCode.ENTER, false, false, false, false));
+    });
+
+    addValuePropertyListener();
+
+    // Synchronize changes to dateTimePropertyProperty back to the underlying date value
+    dateTimeProperty.addListener((observable, oldValue, newValue) -> {
+      if (oldValue != null && newValue == null && !allowNull.get()) {
+        dateTimeProperty.setValue(oldValue);
+      }
+
+      setValue(newValue == null ? null : newValue.toLocalDate());
+    });
+
+    // Persist changes onblur
+    getEditor().focusedProperty().addListener((observable, oldValue, newValue) -> {
+      if (!newValue) {
+        getEditor().fireEvent(new KeyEvent(getEditor(), getEditor(), KeyEvent.KEY_PRESSED, null, null, KeyCode.ENTER, false, false, false, false));
       }
     });
 
-    textMinutes.setPrefColumnCount(2);
+  }
 
+  private void limitTimeField(TextField textField, int maxValue) {
+    textField.setPrefColumnCount(2);
+
+    textField.textProperty().addListener((ov, oldValue, newValue) -> {
+      if (!newValue.chars().allMatch(Character::isDigit)) {
+        textField.setText(oldValue);
+        return;
+      }
+
+      String textValue = textField.getText();
+
+      if (textValue.length() == 2) {
+        if (Integer.parseInt(textValue) > maxValue) {
+          textField.setText("0" + textValue.substring(1));
+          return;
+        }
+      }
+
+      if (textValue.length() > 2) {
+        int start = textValue.length() - 2;
+        int end = textValue.length();
+        textValue = textValue.substring(start, end);
+        if (Integer.parseInt(textValue) > maxValue) {
+          textField.setText("0" + textValue.substring(1));
+        }
+        textField.setText(textValue);
+      }
+    });
+  }
+
+  private void setConverter() {
     setConverter(new StringConverter<LocalDate>() {
       @Override
       public String toString(LocalDate object) {
@@ -110,18 +164,9 @@ public class DateTimePicker extends DatePicker {
         return dateTimeProperty.get().toLocalDate();
       }
     });
+  }
 
-    setOnShowing(event -> {
-      if (dateTimeProperty.get() == null) {
-        if (allowTime.get()) {
-          LocalTime now = LocalTime.now();
-          textHours.setText(String.valueOf(now.getHour()));
-          textMinutes.setText(String.valueOf(now.getMinute()));
-        }
-      }
-      getEditor().fireEvent(new KeyEvent(getEditor(), getEditor(), KeyEvent.KEY_PRESSED, null, null, KeyCode.ENTER, false, false, false, false));
-    });
-
+  private void addValuePropertyListener() {
     valueProperty().addListener((observable, oldValue, newValue) -> {
       if (newValue == null) {
         if (allowNull.get()) {
@@ -159,23 +204,6 @@ public class DateTimePicker extends DatePicker {
         }
       }
     });
-
-    // Synchronize changes to dateTimePropertyProperty back to the underlying date value
-    dateTimeProperty.addListener((observable, oldValue, newValue) -> {
-      if (oldValue != null && newValue == null && !allowNull.get()) {
-        dateTimeProperty.setValue(oldValue);
-      }
-
-      setValue(newValue == null ? null : newValue.toLocalDate());
-    });
-
-    // Persist changes onblur
-    getEditor().focusedProperty().addListener((observable, oldValue, newValue) -> {
-      if (!newValue) {
-        getEditor().fireEvent(new KeyEvent(getEditor(), getEditor(), KeyEvent.KEY_PRESSED, null, null, KeyCode.ENTER, false, false, false, false));
-      }
-    });
-
   }
 
   @Override
