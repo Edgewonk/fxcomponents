@@ -9,6 +9,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -111,11 +112,19 @@ public class DateTimePicker extends DatePicker {
         }
       } else {
         //textValue.length() > 2
-        int start = textValue.length() - 2;
-        int end = textValue.length();
-        textValue = textValue.substring(start, end);
-        if (Integer.parseInt(textValue) > maxValue) {
-          textField.setText("0" + textValue.substring(1));
+        int caretPosition = textField.getCaretPosition();
+
+        if (caretPosition <= 1) {
+          textValue = textValue.substring(0, 2);
+          if (Integer.parseInt(textValue) > maxValue) {
+            textValue = "0" + textValue.substring(1);
+          }
+          Platform.runLater(() -> textField.positionCaret(textField.getCaretPosition() + 1));
+        } else {
+          textValue = textValue.substring(textValue.length() - 2, textValue.length());
+          if (Integer.parseInt(textValue) > maxValue) {
+            textValue = "0" + textValue.substring(1);
+          }
         }
         textField.setText(textValue);
       }
