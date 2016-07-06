@@ -14,13 +14,17 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
+import javafx.scene.control.DateCell;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.util.StringConverter;
 
@@ -89,6 +93,42 @@ public class DateTimePicker extends DatePicker {
       }
     });
 
+    setOnMouseClicked(event -> {
+      if (!isShowing()) {
+        setTimeFromCalendarPopup();
+      }
+    });
+
+    final EventHandler<MouseEvent> dayCellActionHandler = ev -> {
+      if (ev.getButton() != MouseButton.PRIMARY) {
+        return;
+      }
+      setTimeFromCalendarPopup();
+    };
+
+    setDayCellFactory(param -> {
+      DateCell dateCell = new DateCell();
+      dateCell.addEventHandler(MouseEvent.MOUSE_CLICKED, dayCellActionHandler);
+      return dateCell;
+    });
+  }
+
+  private LocalTime getLocalTime(LocalTime current) {
+    int hours;
+    int minutes;
+    if (textHours.getText().isEmpty()) {
+      hours = current.getHour();
+    } else {
+      hours = Integer.parseInt(textHours.getText());
+    }
+
+    if (textMinutes.getText().isEmpty()) {
+      minutes = current.getMinute();
+    } else {
+      minutes = Integer.parseInt(textMinutes.getText());
+    }
+
+    return LocalTime.of(hours, minutes);
   }
 
   private void limitTimeField(TextField textField, int maxValue) {
@@ -175,6 +215,19 @@ public class DateTimePicker extends DatePicker {
     });
   }
 
+  private void setTimeFromCalendarPopup() {
+    LocalDateTime localDateTime = dateTimeProperty.get();
+    if (localDateTime == null) {
+      return;
+    }
+    LocalTime time = getLocalTime(localDateTime.toLocalTime());
+    localDateTime = localDateTime.with(time);
+
+    dateTimeProperty.set(localDateTime);
+
+    getEditor().setText(getConverter().toString(localDateTime.toLocalDate()));
+  }
+
   private void addValuePropertyListener() {
     valueProperty().addListener((observable, oldValue, newValue) -> {
       if (newValue == null) {
@@ -183,32 +236,10 @@ public class DateTimePicker extends DatePicker {
         }
       } else {
         if (dateTimeProperty.get() == null) {
-          LocalTime localTime = LocalTime.now();
-          if (!textHours.getText().isEmpty()) {
-            localTime = localTime.withHour(Integer.parseInt(textHours.getText()));
-          }
-
-          if (!textMinutes.getText().isEmpty()) {
-            localTime = localTime.withMinute(Integer.parseInt(textMinutes.getText()));
-          }
+          LocalTime localTime = getLocalTime(LocalTime.now());
           dateTimeProperty.set(LocalDateTime.of(newValue, localTime));
         } else {
-          LocalTime time = dateTimeProperty.get().toLocalTime();
-          int hours;
-          int minutes;
-          if (textHours.getText().isEmpty()) {
-            hours = time.getHour();
-          } else {
-            hours = Integer.parseInt(textHours.getText());
-          }
-
-          if (textMinutes.getText().isEmpty()) {
-            minutes = time.getMinute();
-          } else {
-            minutes = Integer.parseInt(textMinutes.getText());
-          }
-          time = LocalTime.of(hours, minutes);
-
+          LocalTime time = getLocalTime(dateTimeProperty.get().toLocalTime());
           dateTimeProperty.set(LocalDateTime.of(newValue, time));
         }
       }
