@@ -1,4 +1,4 @@
-package edgewonk.fxcomponents;
+package com.edgewonk.fxcomponents;
 
 import org.junit.Before;
 import org.junit.Test;
