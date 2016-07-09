@@ -1,4 +1,6 @@
 apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -6,6 +8,74 @@ targetCompatibility = '1.8'
 repositories {
     mavenCentral()
     mavenLocal()
+}
+
+ext.release = project.hasProperty('release') ? project.getProperty('release') : false
+
+task javadocJar(type: Jar) {
+    enabled = release
+    classifier = 'javadoc'
+    from javadoc
+}
+
+javadoc.enabled = release
+
+task sourcesJar(type: Jar) {
+    enabled = release
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+signArchives.enabled = release
+
+group = "com.edgewonk"
+archivesBaseName = "fxcomponents"
+version = "1.0"
+
+uploadArchives {
+    enabled = release
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'JavaFX Components'
+                packaging 'jar'
+                artifactId 'fxcomponents'
+                description 'JavaFX Component Library that is developed with Edgewonk.'
+                url 'https://github.com/Edgewonk/fxcomponents'
+
+                scm {
+                    connection 'scm:git@github.com:Edgewonk/fxcomponents.git'
+                    developerConnection 'scm:git@github.com:Edgewonk/fxcomponents.git'
+                    url 'https://github.com/Edgewonk/fxcomponents'
+                }
+
+                licenses {
+                    license {
+                        name 'MIT'
+                        url 'https://github.com/Edgewonk/fxcomponents/blob/master/LICENSE'
+                    }
+                }
+            }
+        }
+    }
 }
 
 dependencies {
