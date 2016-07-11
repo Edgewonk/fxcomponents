@@ -1,4 +1,4 @@
-package edgewonk.fxcomponents;
+package com.edgewonk.fxcomponents;
 
 import com.sun.javafx.scene.control.skin.DatePickerContent;
 import com.sun.javafx.scene.control.skin.DatePickerSkin;
