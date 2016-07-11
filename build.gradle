@@ -73,6 +73,14 @@ uploadArchives {
                         url 'https://github.com/Edgewonk/fxcomponents/blob/master/LICENSE'
                     }
                 }
+
+                developers {
+                    developer {
+                        id 'malafeev'
+                        name 'Sergei Malafeev'
+                        email 'sergeymalafeev@gmail.com'
+                    }
+                }
             }
         }
     }
