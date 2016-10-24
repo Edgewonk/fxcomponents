@@ -16,10 +16,10 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.DateCell;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
-import javafx.scene.control.Skin;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -48,6 +48,8 @@ public class DateTimePicker extends DatePicker {
   private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
   private final TextField textHours = new TextField();
   private final TextField textMinutes = new TextField();
+  private final Button btnOk = new Button(" OK ");
+  private boolean canBeHidden = false;
 
   public DateTimePicker() {
     allowTime.addListener((observable, oldValue, newValue) -> {
@@ -95,6 +97,7 @@ public class DateTimePicker extends DatePicker {
 
     setOnMouseClicked(event -> {
       if (!isShowing()) {
+        canBeHidden = false;
         setTimeFromCalendarPopup();
       }
     });
@@ -110,6 +113,13 @@ public class DateTimePicker extends DatePicker {
       DateCell dateCell = new DateCell();
       dateCell.addEventHandler(MouseEvent.MOUSE_CLICKED, dayCellActionHandler);
       return dateCell;
+    });
+
+    btnOk.setOnAction(event -> {
+      canBeHidden = true;
+      hide();
+      ((DatePickerSkin)getSkin()).hide();
+      canBeHidden = false;
     });
   }
 
@@ -247,16 +257,26 @@ public class DateTimePicker extends DatePicker {
   }
 
   @Override
-  protected Skin<?> createDefaultSkin() {
-    DatePickerSkin datePickerSkin = new DatePickerSkin(this);
+  protected DatePickerSkin createDefaultSkin() {
+    DatePickerSkin datePickerSkin = new DatePickerSkin(this) {
+      public void hide() {
+       if(isVisible() && !canBeHidden) {
+         //nothing
+       } else {
+         super.hide();
+       }
+      }
+    };
     DatePickerContent datePickerContent = (DatePickerContent) datePickerSkin.getPopupContent();
 
     HBox hBox = new HBox();
     hBox.setAlignment(Pos.CENTER_LEFT);
     hBox.setSpacing(7.);
 
-    hBox.getChildren().addAll(textHours, new Label(":"), textMinutes);
+    hBox.getChildren().addAll(textHours, new Label(":"), textMinutes, new Label(" "), btnOk);
     datePickerContent.getChildren().add(0, hBox);
+
+    datePickerContent.setOnMouseClicked(event -> canBeHidden = false);
 
     return datePickerSkin;
   }
@@ -295,5 +315,9 @@ public class DateTimePicker extends DatePicker {
 
   public void setAllowTime(final boolean allowTime) {
     this.allowTime.set(allowTime);
+  }
+
+  public Button getBtnOk() {
+    return btnOk;
   }
 }
