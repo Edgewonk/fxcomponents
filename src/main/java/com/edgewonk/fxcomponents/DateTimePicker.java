@@ -117,6 +117,7 @@ public class DateTimePicker extends DatePicker {
 
     btnOk.setOnAction(event -> {
       canBeHidden = true;
+      setTimeFromCalendarPopup();
       hide();
       ((DatePickerSkin)getSkin()).hide();
       canBeHidden = false;
