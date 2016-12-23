@@ -33,8 +33,7 @@ public class FileChooserControl extends Pane {
     layout.getChildren().add(textField);
     layout.getChildren().add(button);
 
-    button.setText("");
-    button.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/images/folder-open.png"))));
+    button.setText("Open");
 
     // add an icon for the button.
     button.setOnAction(event -> pickFile());
@@ -132,5 +131,9 @@ public class FileChooserControl extends Pane {
 
   public ReadOnlyBooleanProperty existsProperty() {
     return existsProperty;
+  }
+
+  public Button getButton() {
+    return button;
   }
 }

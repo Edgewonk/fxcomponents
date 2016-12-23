@@ -38,7 +38,7 @@ signArchives.enabled = release
 
 group = "com.edgewonk"
 archivesBaseName = "fxcomponents"
-version = "1.4"
+version = "1.5"
 
 uploadArchives {
     enabled = release
