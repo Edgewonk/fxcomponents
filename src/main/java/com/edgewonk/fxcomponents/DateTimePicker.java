@@ -278,6 +278,11 @@ public class DateTimePicker extends DatePicker {
     datePickerContent.getChildren().add(0, hBox);
 
     datePickerContent.setOnMouseClicked(event -> canBeHidden = false);
+    datePickerContent.setOnKeyPressed(event -> {
+      if(event.getCode() == KeyCode.ENTER) {
+        btnOk.fire();
+      }
+    });
 
     return datePickerSkin;
   }
